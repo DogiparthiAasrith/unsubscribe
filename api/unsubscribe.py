@@ -2,12 +2,15 @@ from flask import Flask, request, render_template_string
 from pymongo import MongoClient
 from urllib.parse import unquote
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
+# MongoDB connection details
 MONGO_URI = os.environ.get("MONGO_URI")
 MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME")
 
+# Simple HTML template
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -33,7 +36,7 @@ HTML_TEMPLATE = """
             text-align: center;
             max-width: 400px;
         }
-        h1 { color: #2f3640; font-size: 24px; }
+        h1 { font-size: 24px; }
         p { color: #555; margin-top: 10px; font-size: 16px; }
         .success { color: #27ae60; }
         .warning { color: #e67e22; }
@@ -75,15 +78,16 @@ def unsubscribe():
                 status_class="warning",
                 status_icon="⚠",
                 status_title="Already Unsubscribed",
-                message=f"{email} is already unsubscribed."
+                message=f"{email} is already in our unsubscribed list."
             ), 200
 
+        # ✅ FIXED: Use Python datetime instead of db.command("serverStatus")
         unsubscribed_col.insert_one({
             "email": email,
-            "unsubscribed_at": db.command("serverStatus")["localTime"]
+            "unsubscribed_at": datetime.utcnow()
         })
-        client.close()
 
+        client.close()
         return render_template_string(
             HTML_TEMPLATE,
             status_class="success",
