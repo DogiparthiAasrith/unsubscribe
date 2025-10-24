@@ -5,11 +5,9 @@ import os
 
 app = Flask(__name__)
 
-# MongoDB connection details
 MONGO_URI = os.environ.get("MONGO_URI")
 MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME")
 
-# Simple HTML template for confirmation page
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -35,15 +33,8 @@ HTML_TEMPLATE = """
             text-align: center;
             max-width: 400px;
         }
-        h1 {
-            color: #2f3640;
-            font-size: 24px;
-        }
-        p {
-            color: #555;
-            margin-top: 10px;
-            font-size: 16px;
-        }
+        h1 { color: #2f3640; font-size: 24px; }
+        p { color: #555; margin-top: 10px; font-size: 16px; }
         .success { color: #27ae60; }
         .warning { color: #e67e22; }
         .error { color: #e74c3c; }
@@ -91,8 +82,8 @@ def unsubscribe():
             "email": email,
             "unsubscribed_at": db.command("serverStatus")["localTime"]
         })
-
         client.close()
+
         return render_template_string(
             HTML_TEMPLATE,
             status_class="success",
