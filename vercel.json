@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "unsubscribe.py",
+      "src": "api/unsubscribe.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/unsubscribe",
-      "dest": "unsubscribe.py"
+      "dest": "api/unsubscribe.py"
     }
   ]
 }
