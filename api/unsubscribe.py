@@ -3,7 +3,7 @@ from pymongo import MongoClient
 from urllib.parse import unquote
 import os
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 # MongoDB connection details
 MONGO_URI = os.environ.get("MONGO_URI")
