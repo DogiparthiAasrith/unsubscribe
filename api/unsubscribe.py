@@ -2,15 +2,18 @@ from flask import Flask, request, render_template_string
 from pymongo import MongoClient
 from urllib.parse import unquote
 import os
-from datetime import datetime
+import datetime
 
+# Correctly initialize the Flask app
+# The variable __name__ is a special Python variable that holds the name of the current module.
+# Flask uses this to know where to look for resources like templates and static files.
 app = Flask(__name__)
 
-# MongoDB connection details
+# MongoDB connection details from environment variables
 MONGO_URI = os.environ.get("MONGO_URI")
 MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME")
 
-# Simple HTML template
+# Simple HTML template for the confirmation page
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -36,8 +39,15 @@ HTML_TEMPLATE = """
             text-align: center;
             max-width: 400px;
         }
-        h1 { font-size: 24px; }
-        p { color: #555; margin-top: 10px; font-size: 16px; }
+        h1 {
+            color: #2f3640;
+            font-size: 24px;
+        }
+        p {
+            color: #555;
+            margin-top: 10px;
+            font-size: 16px;
+        }
         .success { color: #27ae60; }
         .warning { color: #e67e22; }
         .error { color: #e74c3c; }
@@ -65,29 +75,31 @@ def unsubscribe():
             message="No email address was provided."
         ), 400
 
+    client = None  # Initialize client to None
     try:
+        # Connect to MongoDB
         client = MongoClient(MONGO_URI)
         db = client[MONGO_DB_NAME]
         unsubscribed_col = db.unsubscribed_emails
 
+        # Check if email is already in the unsubscribed list
         existing = unsubscribed_col.find_one({"email": email})
         if existing:
-            client.close()
             return render_template_string(
                 HTML_TEMPLATE,
                 status_class="warning",
-                status_icon="⚠",
+                status_icon="⚠️",
                 status_title="Already Unsubscribed",
                 message=f"{email} is already in our unsubscribed list."
             ), 200
 
-        # ✅ FIXED: Use Python datetime instead of db.command("serverStatus")
+        # Insert the new email to be unsubscribed
         unsubscribed_col.insert_one({
             "email": email,
-            "unsubscribed_at": datetime.utcnow()
+            # Use a reliable UTC timestamp
+            "unsubscribed_at": datetime.datetime.now(datetime.timezone.utc)
         })
 
-        client.close()
         return render_template_string(
             HTML_TEMPLATE,
             status_class="success",
@@ -97,6 +109,7 @@ def unsubscribe():
         ), 200
 
     except Exception as e:
+        # Log the exception for debugging if you have a logging service
         return render_template_string(
             HTML_TEMPLATE,
             status_class="error",
@@ -104,7 +117,15 @@ def unsubscribe():
             status_title="Server Error",
             message=f"An error occurred: {str(e)}"
         ), 500
+    finally:
+        # Ensure the client connection is closed
+        if client:
+            client.close()
 
-
+# This block is for local development and will not be executed on Vercel
 if __name__ == "__main__":
+    # For local testing, you would need to set the environment variables.
+    # For example, create a .env file and use a library like python-dotenv.
+    # from dotenv import load_dotenv
+    # load_dotenv()
     app.run(host="0.0.0.0", port=3000)
